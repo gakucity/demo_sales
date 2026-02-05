@@ -12,8 +12,29 @@ except ImportError:
     pass
 
 # --- 設定エリア ---
-st.set_page_config(page_title="AI営業トーク生成くん", layout="centered")
-st.title("🎙️ AI営業トークスクリプト生成")
+st.set_page_config(page_title="商談スクリプト生成", layout="centered")
+
+# パスワード認証（APP_PASSWORD を .env / Streamlit Secrets に設定）
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔐 ログイン")
+    pwd = st.text_input("パスワード", type="password", placeholder="パスワードを入力")
+    if st.button("ログイン"):
+        if not APP_PASSWORD:
+            st.error("管理者が APP_PASSWORD を設定していません。.env または Streamlit の Secrets に APP_PASSWORD を追加してください。")
+        elif pwd == APP_PASSWORD:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("パスワードが違います。")
+    st.stop()
+
+# --- 認証済み：メイン画面 ---
+st.title("🏭 営業・商談スクリプト生成")
+st.caption("営業が顧客と商談する際のトークスクリプトを生成します（アポ取得後の商談用）")
 
 # APIキーは環境変数 GOOGLE_API_KEY（ローカルは .env、クラウドは Streamlit の Secrets）
 GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
@@ -47,33 +68,47 @@ with st.sidebar:
         except Exception as e:
             st.error(f"取得失敗: {e}")
     st.markdown("---")
-    industry = st.text_input("相手の業界", placeholder="例：飲食チェーン")
-    product = st.text_input("紹介する商材", placeholder="例：無人レジシステム")
-    target_role = st.selectbox("相手の役職", ["担当者", "店長・現場責任者", "経営層・役員"])
+    industry = st.text_input("業界・業種", placeholder="例：製鉄、化学、水処理、食品、製紙")
+    product = st.text_input("紹介する製品・ソリューション", placeholder="例：DCS、計装システム、制御盤、保全サービス")
+    target_role = st.selectbox("商談相手の役職", ["担当者", "現場責任者・課長", "部門長", "経営層・役員"])
 
-st.subheader("どんな課題を解決しますか？")
-pain_point = st.text_area("解決したい悩み", placeholder="例：人手不足でレジ待ちが発生し、客を取りこぼしている")
+st.subheader("商談で扱う課題・ニーズ")
+pain_point = st.text_area("相手の課題や検討テーマ", placeholder="例：設備老朽化による故障リスク、省人化・遠隔監視、品質の安定化、規制対応")
 
 # --- 生成ロジック ---
-if st.button("トークスクリプトを生成する", type="primary"):
+if st.button("商談スクリプトを生成する", type="primary"):
     if not GOOGLE_API_KEY:
         st.error("APIキーを設定してください。")
     elif industry and product and pain_point:
-        with st.spinner("プロ営業マンが執筆中..."):
+        with st.spinner("商談スクリプトを執筆中..."):
             prompt = f"""
-            あなたはトップセールスです。{industry}の{target_role}に対して、
-            {product}を提案するための「テレアポ用トークスクリプト」を作成してください。
-            
-            【解決する悩み】: {pain_point}
-            
-            構成案：
-            1. 受付突破の第一声
-            2. 本人（{target_role}）へのフロントトーク
-            3. 課題への共感と「ベネフィット」の提示
-            4. 懸念点（「忙しい」「間に合ってる」）への切り返し
-            5. 具体的な日程調整（クロージング）
-            
-            口調は丁寧ながらも、相手のメリットを端的に伝えるスタイルでお願いします。
+            あなたはプラント制御機器メーカーのベテラン営業です。
+            {industry}のプラントオーナー（商談相手は{target_role}）に対して、
+            {product}を提案する「商談用トークスクリプト」を作成してください。
+            ※アポ取得後の商談（対面またはオンライン）用であり、電話のアポ取りではありません。
+
+            【商談で扱う課題・ニーズ】: {pain_point}
+
+            以下の構成で書いてください。特にアイスブレイクとクロージングを必ず含めること。
+
+            1. アイスブレイク
+               - 挨拶、簡単な雑談（天気・業界の話題などで場を和ませる）
+               - 本日の商談の目的・進め方の共有
+
+            2. 課題のヒアリング・共感
+               - 相手の現状や課題の確認、共感の一言
+
+            3. 製品・ソリューションの紹介とベネフィット
+               - {product}の説明と、相手の課題に対するメリットを端的に
+
+            4. 懸念・質問への対応
+               - 想定される質問や懸念への切り返し例
+
+            5. クロージング（必ず含めること）
+               - 次回MTG（打ち合わせ）の日程を具体的にセットする流れ
+               - 意思決定者の確認（「ご検討の際、他にどの方が関与されますか？」「決裁はどちらがお取りになりますか？」など、決裁者・意思決定者を確認する一言を忘れないこと）
+
+            口調は丁寧で、相手のメリットを明確に伝えるスタイルにしてください。
             """
             result_text = None
             used_model = None

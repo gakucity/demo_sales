@@ -1,11 +1,13 @@
 # demo_sales
 
-AI営業トークスクリプト生成アプリ（Streamlit + Google Gemini）
+プラント制御機器メーカーがプラントオーナーに営業する際の**商談用トークスクリプト**を生成するアプリ（Streamlit + Google Gemini）。アイスブレイクからクロージング（次回MTGのセット・意思決定者の確認）までをカバーします。
 
 ## ローカルで動かす
 
 1. 依存関係: `pip install -r requirements.txt`
-2. `.env` に `GOOGLE_API_KEY=あなたのキー` を設定
+2. `.env` に次を設定:
+   - `GOOGLE_API_KEY=あなたのキー`
+   - `APP_PASSWORD=ログイン用パスワード`（知っている人だけがアプリを使えるようにする）
 3. 起動: `streamlit run demo.py`
 
 ## クラウドデプロイ手順（Streamlit Community Cloud）
@@ -17,5 +19,6 @@ AI営業トークスクリプト生成アプリ（Streamlit + Google Gemini）
 5. デプロイ画面の **Advanced settings** を開き、**Secrets** に次を追加:
    ```
    GOOGLE_API_KEY=あなたのGoogle APIキー
+   APP_PASSWORD=ログイン用パスワード
    ```
 6. 保存すると自動で再デプロイされ、数分でアプリのURLが発行されます（例: `https://xxx.streamlit.app`）
