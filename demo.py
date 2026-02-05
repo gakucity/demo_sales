@@ -168,7 +168,7 @@ elif not st.session_state.recommended_services:
     st.info("👆 提案先企業名・業界・課題を入力し、「提案できるサービス候補を8つレコメンド」を押すと、AIが8つのサービス候補を表示します。")
 
 # --- 生成ロジック ---
-if st.button("商談スクリプトを生成する", type="primary"):
+if st.button("商談スクリプトを生成する", type="primary", disabled=not selected_services):
     if not GOOGLE_API_KEY:
         st.error("APIキーを設定してください。")
     elif not (company_name and industry and pain_point):
