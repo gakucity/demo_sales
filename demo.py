@@ -51,6 +51,28 @@ MODEL_ORDER = [
 ]
 models = {name: genai.GenerativeModel(name) for name in MODEL_ORDER}
 
+# 商談終了時のチェックリスト（8項目）
+CHECKLIST_ITEMS = [
+    "次回MTGの日程は決めましたか？",
+    "顧客の予算規模は把握していますか？",
+    "決裁権者は誰ですか？",
+    "次のアクション（提出資料・デモ等）は決まりましたか？",
+    "競合・他社比較の状況は聞けましたか？",
+    "関係者（技術担当・経理等）の関与は確認しましたか？",
+    "ニーズ・課題の優先度は確認しましたか？",
+    "導入時期・タイムラインの希望は聞けましたか？",
+]
+
+
+@st.dialog("商談終了チェックリスト", icon="✅")
+def show_end_checklist():
+    st.caption("商談を終了する前に、以下を確認しましょう。")
+    for i, item in enumerate(CHECKLIST_ITEMS):
+        st.checkbox(item, key=f"end_check_{i}")
+    if st.button("閉じる"):
+        st.rerun()
+
+
 # --- 入力画面 ---
 with st.sidebar:
     st.header("基本情報")
@@ -232,7 +254,15 @@ if st.button("商談スクリプトを生成する", type="primary", disabled=no
                 st.error("**利用枠に達しました**")
                 st.markdown("すべてのモデルで枠超過です。しばらく（約30秒〜1分）待ってから再試行するか、[課金を有効にする](https://aistudio.google.com/)と枠が増えます。")
             if result_text:
+                st.session_state["last_script"] = result_text
+                st.session_state["last_script_model"] = used_model
                 st.success("生成が完了しました！")
                 st.caption(f"使用モデル: {used_model}")
-                st.markdown("---")
-                st.markdown(result_text)
+
+# 生成済みスクリプトがある場合は表示し、「商談を終了する」ボタンを表示
+if st.session_state.get("last_script"):
+    st.markdown("---")
+    st.markdown(st.session_state["last_script"])
+    st.markdown("---")
+    if st.button("商談を終了する", type="primary"):
+        show_end_checklist()
